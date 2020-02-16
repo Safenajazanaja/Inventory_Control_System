@@ -1,15 +1,13 @@
 package com.example.inventorycontrolsystem;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.PersistableBundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -24,7 +22,6 @@ import com.adedom.library.Dru;
 import com.adedom.library.ExecuteQuery;
 import com.example.inventorycontrolsystem.models.Product;
 
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -35,6 +32,8 @@ public class MainActivity extends AppCompatActivity {
     private Button mBtIn;
     private ArrayList<Product> items;
     private RecyclerView mRecyclerView;
+    private SwipeRefreshLayout mSwipeRefreshLayout;
+    private Button mBtout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,34 +46,59 @@ public class MainActivity extends AppCompatActivity {
             Dru.completed(getBaseContext());
         }
         //tool bar
-        Toolbar toolbar=(Toolbar)findViewById(R.id.toolbar) ;
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.setTitle(R.string.app_name);
         setSupportActionBar(toolbar);
 
         //bint widetd
         mBtIn = (Button) findViewById(R.id.bt_in);
         mRecyclerView = (RecyclerView) findViewById(R.id.recyclerView);
+        mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipeRefreshLayout);
+        mBtout=(Button)findViewById(R.id.bt_out);
 
-        mRecyclerView.setLayoutManager(new GridLayoutManager(getBaseContext(), 2));//2 row
+        //mRecyclerView.setLayoutManager(new GridLayoutManager(getBaseContext(), 2));//2 row
+        mBtout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(getBaseContext(), ProductOutActivity.class));
+            }
+        });
+
 
         mBtIn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                startActivity(new Intent(getBaseContext(), ProductInActivity.class));
 
+            }
+        });
+
+        mSwipeRefreshLayout.setColorSchemeColors(
+                getResources().getColor(android.R.color.holo_blue_dark),
+                getResources().getColor(android.R.color.holo_orange_dark),
+                getResources().getColor(android.R.color.holo_green_dark),
+                getResources().getColor(android.R.color.holo_green_light)
+
+
+        );
+        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                fetchProduct();
             }
         });
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_main,menu);
+        getMenuInflater().inflate(R.menu.menu_main, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId()==R.id.menu_main){
-            startActivity(new Intent(getBaseContext(),ProductActivity.class));
+        if (item.getItemId() == R.id.menu_main) {
+            startActivity(new Intent(getBaseContext(), ProductActivity.class));
         }
         return super.onOptionsItemSelected(item);
     }
@@ -86,12 +110,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void fetchProduct() {
+        mSwipeRefreshLayout.setRefreshing(true);
         String sql = "SELECT p.*,t.type_name FROM product p INNER JOIN type t ON p.type_id=t.type_id";
         Dru.connection(ConnectDB.getconnection())
                 .execute(sql)
                 .commit(new ExecuteQuery() {
                     @Override
                     public void onComplete(ResultSet resultSet) {
+                        mSwipeRefreshLayout.setRefreshing(false);
                         try {
                             items = new ArrayList<Product>();
                             while (resultSet.next()) {
@@ -153,6 +179,21 @@ public class MainActivity extends AppCompatActivity {
             tvName = (TextView) itemView.findViewById(R.id.tv_name);
             tvPrice = (TextView) itemView.findViewById(R.id.tv_product);
             tvQty = (TextView) itemView.findViewById(R.id.tv_qty);
+
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Product product = items.get(getAdapterPosition());
+
+                    Bundle bundle = new Bundle();
+
+                    bundle.putParcelable("product", product);
+
+                    ProductDialog dialog = new ProductDialog();
+                    dialog.setArguments(bundle);
+                    dialog.show(getSupportFragmentManager(), null);
+                }
+            });
         }
     }
 }

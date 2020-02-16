@@ -1,14 +1,18 @@
 package com.example.inventorycontrolsystem;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,14 +22,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
-import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.adedom.library.Dru;
 import com.adedom.library.ExecuteQuery;
@@ -39,7 +37,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.UUID;
 
-public class InsertProductActivity extends AppCompatActivity {
+public class EditProductActivity extends AppCompatActivity {
 
     private EditText mEtProductId;
     private EditText mEtProductName;
@@ -53,11 +51,22 @@ public class InsertProductActivity extends AppCompatActivity {
     private Spinner mESpinner;
     private ArrayList<Type> items;
     private String mTypeId;
+    private Product product;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_insert_product);
+        setContentView(R.layout.activity_edit_product);
+
+//        String product_id=getIntent().getStringExtra("product_id");
+//        String product_name=getIntent().getStringExtra("product_name");
+//        double price=getIntent().getDoubleExtra("price",0.0);
+//        int qty=getIntent().getIntExtra("qty",0);
+//        String image=getIntent().getStringExtra("image");
+//        String typeId=getIntent().getStringExtra("type_id");
+//        String type_name=getIntent().getStringExtra("type_name");
+
+         product=getIntent().getParcelableExtra("product");
 
         mEtProductId = (EditText) findViewById(R.id.et_product_id);
         mEtProductName = (EditText) findViewById(R.id.et_product_name);
@@ -68,6 +77,13 @@ public class InsertProductActivity extends AppCompatActivity {
         mIvImage = (ImageView) findViewById(R.id.iv_image);
         mBtCancle = (Button) findViewById(R.id.bt_cancel);
         mBtOk = (Button) findViewById(R.id.bt_ok);
+
+
+        mEtProductId.setText(product.getProductId());
+        mEtProductName.setText(product.getProductName());
+        mEtPrice.setText(product.getPrice()+"");
+        mEtQty.setText(product.getQty()+"");
+        Dru.loadImageCircle(mIvImage,ConnectDB.BASE_IMAGE+product.getImage());
 
         mIvAddType.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -86,51 +102,23 @@ public class InsertProductActivity extends AppCompatActivity {
         mBtOk.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                insertProduct();
+                EditProduct();
             }
         });
 
         mIvImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Dru.selectImage(InsertProductActivity.this, 1234);
+                Dru.selectImage(EditProductActivity.this, 1234);
             }
         });
 
-        mEtProductId.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
 
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                String sql = "SELECT * FROM product WHERE product_id='"+s+"'";
-                        Dru.connection(ConnectDB.getconnection())
-                                .execute(sql)
-                                .commit(new ExecuteQuery() {
-                                    @Override
-                                    public void onComplete(ResultSet resultSet) {
-                                        try {
-                                            if (resultSet.next()) {
-                                                mBtOk.setEnabled(false);
-
-                                            }else {
-                                                mBtOk.setEnabled(true);
-                                            }
-                                        } catch (SQLException e) {
-                                            e.printStackTrace();
-                                        }
-                                    }
-                                });
-
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-
-            }
-        });
+//        mEtProductId.setText(product_id);
+//        mEtProductName.setText(product_name);
+//        mEtPrice.setText(price+"");
+//        mEtQty.setText(qty+"");
+//        Dru.loadImageCircle(mIvImage,ConnectDB.BASE_IMAGE+image);
 
     }
 
@@ -154,22 +142,20 @@ public class InsertProductActivity extends AppCompatActivity {
                                 type.setTypeId(resultSet.getString("type_id"));
                                 type.setTypeName(resultSet.getString("type_name"));
                                 items.add(type);
+
                             }
                             mESpinner.setAdapter(new TypeAdapter(getBaseContext(), items));
+
+
+                            for(int i=0;i<items.size();i++){
+                                mESpinner.setSelection(i);
+                                mTypeId=items.get(i).getTypeId();
+                            }
                         } catch (SQLException e) {
                             e.printStackTrace();
                         }
                     }
                 });
-
-//        mESpinner.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//            @Override
-//            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-//                Type type = (Type) adapterView.getItemAtPosition(i);
-//                Toast.makeText(getBaseContext(), type.getTypeName(), Toast.LENGTH_SHORT).show();
-//                mTypeId = type.getTypeId();
-//            }
-//        });
 
         mESpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -200,17 +186,13 @@ public class InsertProductActivity extends AppCompatActivity {
     }
 
 
-    private void insertProduct() {
+    private void EditProduct() {
         String productId = mEtProductId.getText().toString().trim();
         String productName = mEtProductName.getText().toString().trim();
         String price = mEtPrice.getText().toString().trim();
         String qty = mEtQty.getText().toString().trim();
 
-        if (productId.isEmpty()) {
-            mEtProductId.setError("กรุณากรอกรหัสสินค้า");
-            mEtProductId.setFocusable(true);
-            return;
-        } else if (productName.isEmpty()) return;
+        if (productName.isEmpty()) return;
         else if (price.isEmpty()) return;
         else if (qty.isEmpty()) return;
 
@@ -220,8 +202,7 @@ public class InsertProductActivity extends AppCompatActivity {
             Dru.uploadImage(ConnectDB.BASE_IMAGE, name, mBitmap);
         }
 
-        String sql = "INSERT INTO product VALUES ('" + productId + "','" + productName +
-                "'," + price + "," + qty + ",'" + name + "','" + mTypeId + "')";
+        String sql = "UPDATE product SET product_name='"+productName+"',price='"+price+"',qty='"+qty+"',image='"+name+"',type_id='"+mTypeId+"' WHERE product_id='"+productId+"'";
         Dru.connection(ConnectDB.getconnection())
                 .execute(sql)
                 .commit(new ExecuteUpdate() {
@@ -231,15 +212,6 @@ public class InsertProductActivity extends AppCompatActivity {
                     }
                 });
 
-//        Dru.connection(ConnectDB.getConnection())
-//                .execute(sql)
-//                .commit(new ExecuteUpdate() {
-//                    @Override
-//                    public void onComplete() {
-//                        Toast.makeText(getBaseContext(), "Insert success", Toast.LENGTH_SHORT).show();
-//                        finish();
-//                    }
-//                });
 
     }
 

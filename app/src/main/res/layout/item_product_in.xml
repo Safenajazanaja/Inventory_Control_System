@@ -27,7 +27,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_columnWeight="1"
-            android:text="Product name" />
+            android:text="Product name"
+            android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/tv_price"
@@ -36,11 +38,11 @@
             android:text="Price" />
 
         <TextView
-            android:id="@+id/tv_product_id"
+            android:id="@+id/tv_product_on"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_columnWeight="1"
-            android:text="Product id" />
+            android:text="Product on" />
 
         <TextView
             android:id="@+id/tv_qty"
@@ -49,11 +51,11 @@
             android:text="Qty" />
 
         <TextView
-            android:id="@+id/tv_type_id"
+            android:id="@+id/tv_date_in"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_columnWeight="1"
-            android:text="Type id" />
+            android:text="Date In" />
 
         <TextView
             android:id="@+id/tv_type_name"
